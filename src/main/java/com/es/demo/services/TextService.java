@@ -52,16 +52,20 @@ public class TextService {
 	public void delete() {
 	}
 
-	// 求今日浏览量最高和最低的carType
-	public Map<String, String> getVisitCountByCarType() {
+	// 求浏览量最高和最低的carType
+	public Map<String, String> getVisitCountByCarType(DateTime start,DateTime end) {
 		Map<String, String> map = new HashMap<>();
 		// 构建查询
 		NativeSearchQueryBuilder nsqBuilder = new NativeSearchQueryBuilder();
 		// 构建查询条件
 		BoolQueryBuilder builder = QueryBuilders.boolQuery();
-		builder.must(
-				QueryBuilders.rangeQuery("eventtime").from(new DateTime().withTimeAtStartOfDay()).to(new DateTime()));
+		if (start!=null&&end!=null) {
+			builder.must(
+					QueryBuilders.rangeQuery("eventtime").from(start).to(end));
+		}
+		
 		builder.must(QueryBuilders.matchPhraseQuery("eventtype", EventType.visit.name()));
+		
 		nsqBuilder.withQuery(builder);
 		// 指定要查询的索引库的名称和类型，对应文档@Document中设置的indedName和type
 		nsqBuilder.withIndices("onepiece").withTypes("textinfo");
@@ -104,11 +108,11 @@ public class TextService {
 
 	}
 
-	// 求最近一周各种carType的交易总额
+	// 求各种carType的交易总额
 	public Map<String, BigDecimal> getCarTypeDealAmount() {
 		Map<String, BigDecimal> map = new HashMap<>();
 		BoolQueryBuilder builder = QueryBuilders.boolQuery();
-		builder.must(QueryBuilders.rangeQuery("eventtime").gte(new DateTime().withDayOfWeek(1)));
+		builder.must(QueryBuilders.rangeQuery("eventtime").lt(new DateTime()));
 		builder.must(QueryBuilders.matchPhraseQuery("eventtype", EventType.deal.name()));
 
 		NativeSearchQueryBuilder nsqBuild = new NativeSearchQueryBuilder();
